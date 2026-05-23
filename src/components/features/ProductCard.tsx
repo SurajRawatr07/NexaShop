@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart, Eye, Star, Zap, Clock, Truck, ShieldCheck } from "lucide-react";
+import { Heart, ShoppingCart, Star, Eye, Truck, ShieldCheck } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { formatPrice, truncate } from "@/lib/utils";
 import type { Product } from "@/types";
@@ -12,17 +12,17 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, variant = "default" }: ProductCardProps) {
-  const { addToCart, toggleWishlist, isInWishlist, setQuickViewProduct } = useStore();
+  const { addToCart, toggleWishlist, isInWishlist, setQuickViewProduct, theme } = useStore();
   const [imgIdx, setImgIdx] = useState(0);
   const [adding, setAdding] = useState(false);
-
   const inWishlist = isInWishlist(product.id);
+  const isDark = theme === "dark";
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setAdding(true);
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 400));
     addToCart(product);
     setAdding(false);
   };
@@ -39,33 +39,30 @@ export default function ProductCard({ product, variant = "default" }: ProductCar
     setQuickViewProduct(product);
   };
 
-  const badgeConfig: Record<string, { label: string; class: string }> = {
-    new: { label: "NEW", class: "badge-new" },
-    sale: { label: `${product.discount}% OFF`, class: "badge-sale" },
-    trending: { label: "🔥 TRENDING", class: "badge-trending" },
-    bestseller: { label: "⭐ BESTSELLER", class: "bg-amber-500/20 text-amber-300 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-500/30" },
-    limited: { label: "LIMITED", class: "bg-purple-500/20 text-purple-300 text-xs font-bold px-2 py-0.5 rounded-full border border-purple-500/30" },
-  };
-
   if (variant === "horizontal") {
     return (
-      <Link to={`/product/${product.id}`} className="flex gap-4 glass rounded-xl p-3 hover:border-brand-500/30 transition-all group">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-        />
+      <Link
+        to={`/product/${product.id}`}
+        className={cn(
+          "flex gap-3 p-3 rounded border transition-all hover:shadow-card-hover",
+          isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100"
+        )}
+      >
+        <img src={product.image} alt={product.name} className="w-16 h-16 object-contain rounded flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-medium line-clamp-2">{product.name}</p>
+          <p className={cn("text-sm font-medium line-clamp-2 leading-snug", isDark ? "text-gray-200" : "text-gray-800")}>
+            {truncate(product.name, 45)}
+          </p>
           <div className="flex items-center gap-1 mt-1">
-            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-            <span className="text-amber-400 text-xs">{product.rating}</span>
-            <span className="text-gray-500 text-xs">({(product.reviews / 1000).toFixed(1)}k)</span>
+            <span className="rating-chip text-[10px]">
+              {product.rating} ★
+            </span>
+            <span className="text-theme-muted text-[10px]">({(product.reviews / 1000).toFixed(1)}k)</span>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-white font-bold text-sm">{formatPrice(product.price)}</span>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className={cn("font-bold text-sm", isDark ? "text-white" : "text-gray-900")}>{formatPrice(product.price)}</span>
             {product.discount > 0 && (
-              <span className="text-xs text-green-400">{product.discount}% off</span>
+              <span className="text-green-600 text-xs font-semibold">{product.discount}% off</span>
             )}
           </div>
         </div>
@@ -74,141 +71,138 @@ export default function ProductCard({ product, variant = "default" }: ProductCar
   }
 
   return (
-    <div className="product-card group relative">
-      {/* Image */}
-      <Link to={`/product/${product.id}`} className="block">
-        <div className="relative overflow-hidden aspect-square bg-dark-600">
+    <div className={cn(
+      "shop-card rounded overflow-hidden group relative flex flex-col",
+      isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100"
+    )}>
+      {/* Image Container */}
+      <Link to={`/product/${product.id}`} className="block relative">
+        <div className={cn("relative overflow-hidden", "aspect-square", isDark ? "bg-dark-500" : "bg-gray-50")}>
           <img
             src={product.images[imgIdx] || product.image}
             alt={product.name}
-            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+            className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
             onMouseEnter={() => product.images[1] && setImgIdx(1)}
             onMouseLeave={() => setImgIdx(0)}
             loading="lazy"
           />
 
-          {/* Overlay actions */}
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="absolute top-2 right-2 flex flex-col gap-2 translate-x-8 group-hover:translate-x-0 transition-transform duration-300">
+          {/* Hover Actions */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-200">
             <button
               onClick={handleWishlist}
               className={cn(
-                "w-9 h-9 rounded-full glass flex items-center justify-center transition-all duration-200",
-                inWishlist ? "bg-pink-500/30 border-pink-500/50" : "hover:bg-pink-500/20 hover:border-pink-500/40"
+                "w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-all",
+                inWishlist
+                  ? "bg-red-50 text-red-500 border border-red-200"
+                  : isDark ? "bg-dark-500 text-gray-400 border border-dark-400" : "bg-white text-gray-400 border border-gray-200 hover:text-red-400"
               )}
             >
-              <Heart className={cn("w-4 h-4 transition-colors", inWishlist ? "fill-pink-400 text-pink-400" : "text-gray-300")} />
+              <Heart className={cn("w-3.5 h-3.5", inWishlist && "fill-red-500")} />
             </button>
             <button
               onClick={handleQuickView}
-              className="w-9 h-9 rounded-full glass flex items-center justify-center hover:bg-brand-500/20 hover:border-brand-500/40 transition-all"
+              className={cn(
+                "w-8 h-8 rounded-full shadow-md flex items-center justify-center transition-all",
+                isDark ? "bg-dark-500 text-gray-400 border border-dark-400 hover:text-white" : "bg-white text-gray-400 border border-gray-200 hover:text-brand-500"
+              )}
             >
-              <Eye className="w-4 h-4 text-gray-300" />
+              <Eye className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.badge && badgeConfig[product.badge] && (
-              <span className={badgeConfig[product.badge].class}>
-                {badgeConfig[product.badge].label}
-              </span>
+            {product.discount >= 20 && (
+              <span className="badge-sale">{product.discount}% OFF</span>
             )}
-            {product.stockCount <= 10 && product.inStock && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
-                Only {product.stockCount} left
-              </span>
+            {product.badge === "new" && (
+              <span className="badge-new">NEW</span>
+            )}
+            {product.badge === "trending" && (
+              <span className="badge-trending">HOT</span>
             )}
           </div>
 
           {/* Assured */}
           {product.assured && (
-            <div className="absolute bottom-2 left-2">
-              <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                <ShieldCheck className="w-2.5 h-2.5" /> ASSURED
-              </span>
-            </div>
-          )}
-
-          {/* Viewers */}
-          {product.viewers && product.viewers > 500 && (
-            <div className="absolute bottom-2 right-2">
-              <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-black/60 text-gray-300">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                {product.viewers.toLocaleString()} viewing
+            <div className="absolute bottom-1.5 left-2">
+              <span className={cn(
+                "flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded",
+                isDark ? "bg-blue-900/60 text-blue-300" : "bg-blue-50 text-blue-600 border border-blue-100"
+              )}>
+                <ShieldCheck className="w-2.5 h-2.5" /> Assured
               </span>
             </div>
           )}
         </div>
 
-        {/* Info */}
-        <div className="p-3">
-          <p className="text-gray-400 text-xs mb-0.5">{product.brand}</p>
-          <h3 className="text-white text-sm font-medium line-clamp-2 leading-snug mb-2">
+        {/* Product Info */}
+        <div className="p-2.5 pb-0">
+          <p className={cn("text-[10px] font-medium mb-0.5", isDark ? "text-gray-400" : "text-gray-400")}>{product.brand}</p>
+          <h3 className={cn("text-xs font-medium line-clamp-2 leading-snug mb-1.5", isDark ? "text-gray-200" : "text-gray-800")}>
             {product.name}
           </h3>
 
           {/* Rating */}
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="flex items-center gap-0.5 bg-green-600/20 rounded px-1.5 py-0.5">
-              <span className="text-green-400 text-xs font-semibold">{product.rating}</span>
-              <Star className="w-2.5 h-2.5 text-green-400 fill-green-400" />
-            </div>
-            <span className="text-gray-500 text-xs">({(product.reviews / 1000).toFixed(1)}k reviews)</span>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="rating-chip">
+              {product.rating} ★
+            </span>
+            <span className={cn("text-[10px]", isDark ? "text-gray-500" : "text-gray-400")}>
+              ({product.reviews >= 1000 ? `${(product.reviews / 1000).toFixed(1)}k` : product.reviews})
+            </span>
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-white font-bold text-lg">{formatPrice(product.price)}</span>
+          <div className="flex items-baseline gap-1.5 mb-1">
+            <span className={cn("font-bold text-sm", isDark ? "text-white" : "text-gray-900")}>{formatPrice(product.price)}</span>
             {product.discount > 0 && (
               <>
-                <span className="text-gray-500 text-xs line-through">{formatPrice(product.originalPrice)}</span>
-                <span className="text-green-400 text-xs font-semibold">{product.discount}% off</span>
+                <span className={cn("text-[10px] line-through", isDark ? "text-gray-500" : "text-gray-400")}>{formatPrice(product.originalPrice)}</span>
+                <span className="text-green-600 text-[10px] font-semibold">{product.discount}% off</span>
               </>
             )}
           </div>
 
           {/* Delivery */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className={cn("flex items-center gap-1 text-[10px] mb-2", isDark ? "text-gray-400" : "text-gray-500")}>
             {product.freeDelivery ? (
-              <span className="text-green-400 flex items-center gap-1">
-                <Truck className="w-3 h-3" /> Free delivery
+              <span className="text-green-600 flex items-center gap-0.5 font-medium">
+                <Truck className="w-2.5 h-2.5" /> Free Delivery
               </span>
             ) : (
               <span>₹40 delivery</span>
             )}
-            <span className="text-gray-600">•</span>
-            <Clock className="w-2.5 h-2.5" />
-            <span>{product.deliveryDays} day{product.deliveryDays > 1 ? "s" : ""}</span>
           </div>
         </div>
       </Link>
 
-      {/* Add to Cart Button */}
-      <div className="px-3 pb-3">
+      {/* Add to Cart */}
+      <div className="p-2.5 pt-0 mt-auto">
         <button
           onClick={handleAddToCart}
           disabled={adding || !product.inStock}
           className={cn(
-            "w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2",
+            "w-full py-2 rounded text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
             product.inStock
-              ? "btn-primary"
-              : "bg-gray-700 text-gray-500 cursor-not-allowed"
+              ? isDark
+                ? "bg-brand-600 hover:bg-brand-500 text-white"
+                : "bg-brand-500 hover:bg-brand-600 text-white"
+              : isDark ? "bg-dark-400 text-gray-500 cursor-not-allowed" : "bg-gray-100 text-gray-400 cursor-not-allowed"
           )}
         >
           {adding ? (
-            <span className="relative z-10 flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <>
+              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Adding...
-            </span>
+            </>
           ) : product.inStock ? (
-            <span className="relative z-10 flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
+            <>
+              <ShoppingCart className="w-3 h-3" />
               Add to Cart
-            </span>
-          ) : (
-            "Out of Stock"
-          )}
+            </>
+          ) : "Out of Stock"}
         </button>
       </div>
     </div>

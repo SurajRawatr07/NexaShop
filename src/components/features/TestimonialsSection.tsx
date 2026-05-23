@@ -1,40 +1,51 @@
 import React from "react";
-import { Star, Quote } from "lucide-react";
+import { useStore } from "@/store/useStore";
 import { TESTIMONIALS } from "@/data/products";
-import SectionHeader from "./SectionHeader";
+import { Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function TestimonialsSection() {
+  const { theme } = useStore();
+  const isDark = theme === "dark";
+
   return (
-    <section className="py-12">
-      <div className="container-custom">
-        <SectionHeader
-          title="What Our Customers Say"
-          subtitle="Real reviews from real shoppers"
-          gradient
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {TESTIMONIALS.map((t, i) => (
-            <div
-              key={t.id}
-              className="glass rounded-2xl p-5 hover:border-brand-500/30 transition-all duration-300 hover:-translate-y-1 group"
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <Quote className="w-6 h-6 text-brand-400/40 mb-3" />
-              <p className="text-gray-300 text-sm leading-relaxed mb-4 line-clamp-4">{t.comment}</p>
-              <div className="flex items-center gap-0.5 mb-3">
-                {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <div className="flex items-center gap-3">
-                <img src={t.avatar} alt={t.name} className="w-9 h-9 rounded-full" />
-                <div>
-                  <p className="text-white text-sm font-semibold">{t.name}</p>
-                  <p className="text-gray-500 text-xs">{t.role}</p>
+    <section className={cn(isDark ? "bg-dark-700 border-y border-dark-500" : "bg-gray-50 border-y border-gray-100")}>
+      <div className="section-divider" />
+      <div className="py-6">
+        <div className="container-custom">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={cn("text-base md:text-lg font-bold", isDark ? "text-white" : "text-gray-900")}>
+              What Customers Say
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {TESTIMONIALS.map((t) => (
+              <div
+                key={t.id}
+                className={cn(
+                  "p-4 rounded border transition-all",
+                  isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100 shadow-card"
+                )}
+              >
+                <div className="flex items-center gap-0.5 mb-2">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className={cn("text-xs leading-relaxed mb-3 line-clamp-3", isDark ? "text-gray-300" : "text-gray-600")}>
+                  "{t.comment}"
+                </p>
+                <div className="flex items-center gap-2">
+                  <img src={t.avatar} alt={t.name} className="w-7 h-7 rounded-full object-cover" />
+                  <div>
+                    <p className={cn("text-xs font-semibold", isDark ? "text-gray-200" : "text-gray-800")}>{t.name}</p>
+                    <p className={cn("text-[10px]", isDark ? "text-gray-500" : "text-gray-400")}>{t.role}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>

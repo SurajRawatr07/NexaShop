@@ -10,6 +10,11 @@ interface StoreState {
   setUser: (user: User | null) => void;
   logout: () => void;
 
+  // Theme
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+  setTheme: (t: "light" | "dark") => void;
+
   // Cart
   cartItems: CartItem[];
   addToCart: (product: Product, quantity?: number, color?: string, size?: string) => void;
@@ -59,6 +64,18 @@ export const useStore = create<StoreState>()(
         toast.success("Logged out successfully");
       },
 
+      // Theme
+      theme: "light",
+      toggleTheme: () => {
+        const next = get().theme === "light" ? "dark" : "light";
+        set({ theme: next });
+        document.documentElement.classList.toggle("dark", next === "dark");
+      },
+      setTheme: (t) => {
+        set({ theme: t });
+        document.documentElement.classList.toggle("dark", t === "dark");
+      },
+
       // Cart
       cartItems: [],
       addToCart: (product, quantity = 1, color, size) => {
@@ -74,7 +91,7 @@ export const useStore = create<StoreState>()(
             cartItems: [...state.cartItems, { ...product, quantity, selectedColor: color, selectedSize: size }],
           }));
         }
-        toast.success(`${product.name.slice(0, 25)}... added to cart!`);
+        toast.success(`Added to cart!`, { icon: "🛒", duration: 1800 });
       },
       removeFromCart: (id) => {
         set((state) => ({ cartItems: state.cartItems.filter((i) => i.id !== id) }));
@@ -86,23 +103,17 @@ export const useStore = create<StoreState>()(
         }));
       },
       clearCart: () => set({ cartItems: [], appliedCoupon: null, couponDiscount: 0 }),
-      cartTotal: () => {
-        const items = get().cartItems;
-        return items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      },
-      cartCount: () => {
-        return get().cartItems.reduce((sum, i) => sum + i.quantity, 0);
-      },
+      cartTotal: () => get().cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      cartCount: () => get().cartItems.reduce((sum, i) => sum + i.quantity, 0),
 
       // Wishlist
       wishlistItems: [],
       addToWishlist: (product) => {
         set((state) => ({ wishlistItems: [...state.wishlistItems, product] }));
-        toast.success("Added to wishlist ♥");
+        toast.success("Saved to wishlist", { icon: "♥" });
       },
       removeFromWishlist: (id) => {
         set((state) => ({ wishlistItems: state.wishlistItems.filter((i) => i.id !== id) }));
-        toast("Removed from wishlist");
       },
       isInWishlist: (id) => get().wishlistItems.some((i) => i.id === id),
       toggleWishlist: (product) => {
@@ -145,7 +156,13 @@ export const useStore = create<StoreState>()(
         cartItems: state.cartItems,
         wishlistItems: state.wishlistItems,
         recentlyViewed: state.recentlyViewed,
+        theme: state.theme,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          document.documentElement.classList.toggle("dark", state.theme === "dark");
+        }
+      },
     }
   )
 );

@@ -1,27 +1,29 @@
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SlidersHorizontal, Grid3X3, List, X, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, List, ChevronDown } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 import ProductCard from "@/components/features/ProductCard";
 import type { SortOption } from "@/types";
+import { useStore } from "@/store/useStore";
+import { cn } from "@/lib/utils";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "relevance", label: "Relevance" },
   { value: "price-low", label: "Price: Low to High" },
   { value: "price-high", label: "Price: High to Low" },
   { value: "rating", label: "Top Rated" },
-  { value: "newest", label: "Newest" },
   { value: "discount", label: "Biggest Discount" },
 ];
 
 export default function ShopPage() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
+  const { theme } = useStore();
+  const isDark = theme === "dark";
   const [sort, setSort] = useState<SortOption>("relevance");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
-    minPrice: 0,
     maxPrice: 300000,
     rating: 0,
     freeDelivery: false,
@@ -40,18 +42,16 @@ export default function ShopPage() {
         x.category.toLowerCase().includes(query.toLowerCase())
       );
     }
-    p = p.filter((x) => x.price >= filters.minPrice && x.price <= filters.maxPrice);
+    p = p.filter((x) => x.price <= filters.maxPrice);
     if (filters.rating > 0) p = p.filter((x) => x.rating >= filters.rating);
     if (filters.freeDelivery) p = p.filter((x) => x.freeDelivery);
     if (filters.inStock) p = p.filter((x) => x.inStock);
     if (filters.brands.length > 0) p = p.filter((x) => filters.brands.includes(x.brand));
-
     switch (sort) {
       case "price-low": p.sort((a, b) => a.price - b.price); break;
       case "price-high": p.sort((a, b) => b.price - a.price); break;
       case "rating": p.sort((a, b) => b.rating - a.rating); break;
       case "discount": p.sort((a, b) => b.discount - a.discount); break;
-      default: break;
     }
     return p;
   }, [query, sort, filters]);
@@ -63,143 +63,76 @@ export default function ShopPage() {
     }));
   };
 
+  const filterSidebarClass = cn(
+    "rounded border p-4 sticky top-[104px] space-y-5",
+    isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100 shadow-card"
+  );
+
   return (
-    <div className="pt-[130px] min-h-screen">
-      <div className="container-custom py-6">
+    <div className="pt-[96px] min-h-screen bg-theme-secondary">
+      <div className="container-custom py-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-2xl font-bold font-grotesk text-white">
+            <h1 className="text-base font-bold text-theme-primary">
               {query ? `Results for "${query}"` : "All Products"}
             </h1>
-            <p className="text-gray-400 text-sm mt-0.5">{filtered.length} products found</p>
+            <p className="text-theme-muted text-xs">{filtered.length} products found</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
-              className="flex items-center gap-2 glass rounded-xl px-4 py-2.5 text-gray-300 hover:text-white transition-all text-sm md:hidden"
+              className={cn("flex items-center gap-1.5 px-3 py-2 rounded border text-xs font-medium transition-colors md:hidden", isDark ? "border-dark-400 text-gray-300 hover:bg-dark-600" : "border-gray-200 text-gray-700 hover:bg-gray-50")}
             >
-              <SlidersHorizontal className="w-4 h-4" /> Filters
+              <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
             </button>
-            <div className="flex items-center gap-2 glass rounded-xl p-1">
-              <button onClick={() => setView("grid")} className={`p-2 rounded-lg transition-all ${view === "grid" ? "bg-brand-500/20 text-brand-400" : "text-gray-400"}`}>
-                <Grid3X3 className="w-4 h-4" />
+            <div className={cn("flex items-center rounded border overflow-hidden", isDark ? "border-dark-400" : "border-gray-200")}>
+              <button onClick={() => setView("grid")} className={cn("p-2 transition-colors", view === "grid" ? isDark ? "bg-brand-900/30 text-brand-400" : "bg-blue-50 text-brand-500" : "text-theme-muted hover:text-theme-primary")}>
+                <Grid3X3 className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => setView("list")} className={`p-2 rounded-lg transition-all ${view === "list" ? "bg-brand-500/20 text-brand-400" : "text-gray-400"}`}>
-                <List className="w-4 h-4" />
+              <button onClick={() => setView("list")} className={cn("p-2 transition-colors border-l", isDark ? "border-dark-400" : "border-gray-200", view === "list" ? isDark ? "bg-brand-900/30 text-brand-400" : "bg-blue-50 text-brand-500" : "text-theme-muted hover:text-theme-primary")}>
+                <List className="w-3.5 h-3.5" />
               </button>
             </div>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortOption)}
-              className="glass rounded-xl px-3 py-2.5 text-gray-300 text-sm outline-none border border-white/10 bg-transparent"
+              className="form-input w-auto text-xs py-1.5"
             >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value} className="bg-dark-700">{o.label}</option>
-              ))}
+              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
         </div>
 
-        <div className="flex gap-6">
-          {/* Filters Sidebar */}
-          <aside className={`w-64 flex-shrink-0 hidden md:block`}>
-            <div className="glass rounded-2xl p-5 sticky top-36 space-y-6">
+        {/* Mobile Filter Panel */}
+        {filterOpen && (
+          <div className={cn("rounded border p-4 mb-4 md:hidden", isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100 shadow-card")}>
+            <FilterContent filters={filters} setFilters={setFilters} allBrands={allBrands} toggleBrand={toggleBrand} isDark={isDark} />
+          </div>
+        )}
+
+        <div className="flex gap-4">
+          {/* Filter Sidebar - Desktop */}
+          <aside className="hidden md:block w-56 flex-shrink-0">
+            <div className={filterSidebarClass}>
               <div className="flex items-center justify-between">
-                <h3 className="text-white font-semibold">Filters</h3>
-                <button
-                  onClick={() => setFilters({ minPrice: 0, maxPrice: 300000, rating: 0, freeDelivery: false, inStock: false, brands: [] })}
-                  className="text-brand-400 text-xs hover:text-brand-300"
-                >
-                  Clear All
-                </button>
+                <h3 className="text-theme-primary font-semibold text-sm">Filters</h3>
+                <button onClick={() => setFilters({ maxPrice: 300000, rating: 0, freeDelivery: false, inStock: false, brands: [] })} className="text-brand-500 text-xs hover:underline">Clear All</button>
               </div>
-
-              {/* Price */}
-              <div>
-                <h4 className="text-gray-300 text-sm font-semibold mb-3">Price Range</h4>
-                <input
-                  type="range"
-                  min={0}
-                  max={300000}
-                  value={filters.maxPrice}
-                  onChange={(e) => setFilters((f) => ({ ...f, maxPrice: +e.target.value }))}
-                  className="w-full accent-brand-500"
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>₹0</span>
-                  <span>₹{filters.maxPrice.toLocaleString()}</span>
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div>
-                <h4 className="text-gray-300 text-sm font-semibold mb-3">Min Rating</h4>
-                <div className="flex gap-2">
-                  {[4, 3, 2, 0].map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setFilters((f) => ({ ...f, rating: r }))}
-                      className={`glass rounded-lg px-2.5 py-1.5 text-xs transition-all ${filters.rating === r ? "border-brand-500/60 text-brand-400 bg-brand-500/10" : "text-gray-400"}`}
-                    >
-                      {r === 0 ? "All" : `${r}★+`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div className="space-y-3">
-                {[
-                  { label: "Free Delivery", key: "freeDelivery" },
-                  { label: "In Stock Only", key: "inStock" },
-                ].map(({ label, key }) => (
-                  <label key={key} className="flex items-center gap-3 cursor-pointer">
-                    <div
-                      onClick={() => setFilters((f) => ({ ...f, [key]: !f[key as keyof typeof f] }))}
-                      className={`w-10 h-5 rounded-full transition-all ${filters[key as keyof typeof filters] ? "bg-brand-500" : "bg-white/10"} relative`}
-                    >
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${filters[key as keyof typeof filters] ? "left-5" : "left-0.5"}`} />
-                    </div>
-                    <span className="text-gray-300 text-sm">{label}</span>
-                  </label>
-                ))}
-              </div>
-
-              {/* Brands */}
-              <div>
-                <h4 className="text-gray-300 text-sm font-semibold mb-3">Brands</h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto hide-scrollbar">
-                  {allBrands.map((brand) => (
-                    <label key={brand} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={filters.brands.includes(brand)}
-                        onChange={() => toggleBrand(brand)}
-                        className="w-4 h-4 rounded accent-brand-500"
-                      />
-                      <span className="text-gray-400 group-hover:text-gray-200 text-sm transition-colors">{brand}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              <FilterContent filters={filters} setFilters={setFilters} allBrands={allBrands} toggleBrand={toggleBrand} isDark={isDark} />
             </div>
           </aside>
 
           {/* Products */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-white text-xl font-bold mb-2">No products found</h3>
-                <p className="text-gray-400">Try adjusting your search or filters</p>
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-4xl mb-3">🔍</p>
+                <h3 className="text-theme-primary font-bold mb-1">No products found</h3>
+                <p className="text-theme-muted text-sm">Try adjusting filters or search terms</p>
               </div>
             ) : (
-              <div className={
-                view === "grid"
-                  ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4"
-                  : "grid grid-cols-1 gap-3"
-              }>
+              <div className={view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" : "grid grid-cols-1 gap-2"}>
                 {filtered.map((product) => (
                   <ProductCard key={product.id} product={product} variant={view === "list" ? "horizontal" : "default"} />
                 ))}
@@ -209,5 +142,62 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FilterContent({ filters, setFilters, allBrands, toggleBrand, isDark }: {
+  filters: { maxPrice: number; rating: number; freeDelivery: boolean; inStock: boolean; brands: string[] };
+  setFilters: React.Dispatch<React.SetStateAction<typeof filters>>;
+  allBrands: string[];
+  toggleBrand: (brand: string) => void;
+  isDark: boolean;
+}) {
+  return (
+    <>
+      {/* Price */}
+      <div>
+        <h4 className="text-theme-secondary text-xs font-semibold mb-2">Max Price</h4>
+        <input type="range" min={0} max={300000} value={filters.maxPrice} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: +e.target.value }))} className="w-full accent-brand-500" />
+        <div className="flex justify-between text-xs text-theme-muted mt-1">
+          <span>₹0</span>
+          <span>₹{filters.maxPrice.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Rating */}
+      <div>
+        <h4 className="text-theme-secondary text-xs font-semibold mb-2">Min Rating</h4>
+        <div className="flex gap-1.5">
+          {[4, 3, 0].map((r) => (
+            <button key={r} onClick={() => setFilters((f) => ({ ...f, rating: r }))} className={cn("px-2.5 py-1 rounded border text-xs transition-colors", filters.rating === r ? isDark ? "border-brand-500 text-brand-400 bg-brand-900/20" : "border-brand-500 text-brand-500 bg-blue-50" : isDark ? "border-dark-400 text-gray-400" : "border-gray-200 text-gray-500")}>
+              {r === 0 ? "All" : `${r}★+`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Toggles */}
+      <div className="space-y-2">
+        {[{ label: "Free Delivery", key: "freeDelivery" }, { label: "In Stock", key: "inStock" }].map(({ label, key }) => (
+          <label key={key} className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={filters[key as keyof typeof filters] as boolean} onChange={() => setFilters((f) => ({ ...f, [key]: !f[key as keyof typeof f] }))} className="w-3.5 h-3.5 accent-brand-500" />
+            <span className="text-theme-secondary text-xs">{label}</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Brands */}
+      <div>
+        <h4 className="text-theme-secondary text-xs font-semibold mb-2">Brands</h4>
+        <div className="space-y-1.5 max-h-36 overflow-y-auto hide-scrollbar">
+          {allBrands.map((brand) => (
+            <label key={brand} className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={filters.brands.includes(brand)} onChange={() => toggleBrand(brand)} className="w-3.5 h-3.5 accent-brand-500" />
+              <span className="text-theme-secondary text-xs">{brand}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }

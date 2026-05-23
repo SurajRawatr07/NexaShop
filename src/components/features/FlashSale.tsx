@@ -1,11 +1,16 @@
 import React, { useMemo } from "react";
-import { Clock, Flame, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Clock, ChevronRight } from "lucide-react";
 import { FLASH_SALE_PRODUCTS } from "@/data/products";
 import { useCountdown } from "@/hooks/useCountdown";
 import ProductCard from "./ProductCard";
-import SectionHeader from "./SectionHeader";
+import { useStore } from "@/store/useStore";
+import { cn } from "@/lib/utils";
 
 export default function FlashSale() {
+  const { theme } = useStore();
+  const isDark = theme === "dark";
+
   const target = useMemo(() => {
     const d = new Date();
     d.setHours(d.getHours() + 3, d.getMinutes() + 42, d.getSeconds() + 17);
@@ -13,73 +18,61 @@ export default function FlashSale() {
   }, []);
 
   const { hours, minutes, seconds } = useCountdown(target);
-
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <section className="py-12">
-      <div className="container-custom">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
-              <Flame className="w-5 h-5 text-red-400 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl md:text-3xl font-bold font-grotesk text-white">Flash Sale</h2>
-                <span className="badge-sale animate-pulse">LIVE</span>
-              </div>
-              <p className="text-gray-400 text-sm">Hurry up! Deals expire soon</p>
-            </div>
-          </div>
+    <section className={cn("py-4", isDark ? "bg-dark-700" : "bg-white")}>
+      {/* Section divider */}
+      <div className="section-divider mb-0" />
 
-          {/* Countdown */}
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-red-400" />
-            <span className="text-gray-400 text-sm">Ends in:</span>
-            <div className="flex items-center gap-1">
-              {[pad(hours), pad(minutes), pad(seconds)].map((t, i) => (
-                <React.Fragment key={i}>
-                  <div className="glass rounded-lg px-2.5 py-1.5 min-w-[40px] text-center">
-                    <span className="text-white font-bold text-lg leading-none block">{t}</span>
-                    <span className="text-gray-500 text-[9px]">
-                      {i === 0 ? "HRS" : i === 1 ? "MIN" : "SEC"}
-                    </span>
-                  </div>
-                  {i < 2 && <span className="text-red-400 font-bold text-lg">:</span>}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className={cn("py-4", isDark ? "bg-dark-700 border-y border-dark-500" : "bg-white border-y border-gray-100")}>
+        <div className="container-custom">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-base md:text-lg font-bold text-orange-500 flex items-center gap-1.5">
+                ⚡ Flash Deals
+              </h2>
 
-        {/* Progress bars for each product */}
-        <div className="hidden md:flex gap-2 mb-4">
-          {FLASH_SALE_PRODUCTS.slice(0, 4).map((p) => {
-            const sold = Math.min(90, Math.floor(100 - (p.stockCount / 200) * 100));
-            return (
-              <div key={p.id} className="flex-1">
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
-                  <span>{sold}% sold</span>
-                  <span>{p.stockCount} left</span>
-                </div>
-                <div className="h-1.5 bg-dark-500 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full"
-                    style={{ width: `${sold}%`, transition: "width 1s ease" }}
-                  />
+              {/* Countdown */}
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-orange-500" />
+                <span className={cn("text-xs", isDark ? "text-gray-400" : "text-gray-500")}>Ends in</span>
+                <div className="flex items-center gap-0.5">
+                  {[pad(hours), pad(minutes), pad(seconds)].map((t, i) => (
+                    <React.Fragment key={i}>
+                      <div className="bg-gray-900 text-white rounded px-1.5 py-0.5 text-xs font-mono font-bold min-w-[26px] text-center">
+                        {t}
+                      </div>
+                      {i < 2 && <span className="text-orange-500 font-bold text-xs">:</span>}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
 
-        {/* Products grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-4">
-          {FLASH_SALE_PRODUCTS.slice(0, 8).map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+            <Link
+              to="/deals"
+              className={cn("flex items-center gap-0.5 text-xs font-semibold uppercase tracking-wide", isDark ? "text-brand-400" : "text-brand-500")}
+            >
+              View All <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Products — horizontal scroll on mobile, grid on desktop */}
+          <div className="md:hidden scroll-track">
+            {FLASH_SALE_PRODUCTS.slice(0, 8).map((product) => (
+              <div key={product.id} style={{ width: "160px" }}>
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:grid grid-cols-4 lg:grid-cols-6 gap-3">
+            {FLASH_SALE_PRODUCTS.slice(0, 6).map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

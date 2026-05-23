@@ -5,6 +5,17 @@ import { Toaster } from "react-hot-toast";
 import App from "./App";
 import "./index.css";
 
+// Apply saved theme before render
+const savedStore = localStorage.getItem("nexashop-store");
+if (savedStore) {
+  try {
+    const parsed = JSON.parse(savedStore);
+    if (parsed?.state?.theme === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  } catch {}
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -13,20 +24,21 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         position="top-right"
         toastOptions={{
           style: {
-            background: "rgba(15, 15, 26, 0.95)",
-            color: "#f1f1f5",
-            border: "1px solid rgba(139, 69, 255, 0.3)",
-            backdropFilter: "blur(20px)",
-            borderRadius: "12px",
-            fontSize: "14px",
+            background: "#ffffff",
+            color: "#1a1a1a",
+            border: "1px solid #e0e0e0",
+            borderRadius: "6px",
+            fontSize: "13px",
+            fontFamily: "Poppins, sans-serif",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
           },
           success: {
-            iconTheme: { primary: "#a855f7", secondary: "#f1f1f5" },
+            iconTheme: { primary: "#2874f0", secondary: "#ffffff" },
           },
           error: {
-            iconTheme: { primary: "#ef4444", secondary: "#f1f1f5" },
+            iconTheme: { primary: "#ef4444", secondary: "#ffffff" },
           },
-          duration: 3000,
+          duration: 2000,
         }}
       />
     </BrowserRouter>

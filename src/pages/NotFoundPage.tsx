@@ -1,32 +1,29 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import { Home, Search } from "lucide-react";
+import { useStore } from "@/store/useStore";
+import { cn } from "@/lib/utils";
 
 export default function NotFoundPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-800 px-4">
-      <div className="text-center">
-        <div className="relative mb-8">
-          <p className="text-[120px] md:text-[180px] font-black text-white/5 leading-none select-none">404</p>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-6xl mb-2">🛍️</p>
-              <p className="text-white text-2xl font-bold">Page Not Found</p>
-            </div>
-          </div>
-        </div>
+  const { theme } = useStore();
+  const isDark = theme === "dark";
 
-        <p className="text-gray-400 text-lg mb-8 max-w-md mx-auto">
+  return (
+    <div className={cn("min-h-screen flex items-center justify-center px-4", isDark ? "bg-dark-800" : "bg-gray-50")}>
+      <div className="text-center">
+        <p className="text-8xl md:text-9xl font-black text-gray-200 dark:text-dark-500 leading-none select-none mb-2">
+          404
+        </p>
+        <p className="text-4xl mb-3">🛍️</p>
+        <h1 className="text-xl font-bold text-theme-primary mb-2">Page Not Found</h1>
+        <p className="text-theme-muted text-sm mb-6 max-w-xs mx-auto">
           Looks like this page went out of stock! Let's get you back to shopping.
         </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link to="/" className="btn-primary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 group">
-            <span className="relative z-10 flex items-center gap-2">
-              <Home className="w-4 h-4" /> Go Home
-            </span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+          <Link to="/" className="btn-flipkart px-6 py-2.5 rounded text-sm font-semibold flex items-center gap-1.5">
+            <Home className="w-4 h-4" /> Go Home
           </Link>
-          <Link to="/shop" className="glass px-6 py-3 rounded-xl font-semibold text-gray-300 hover:text-white flex items-center gap-2 transition-all">
+          <Link to="/shop" className={cn("px-6 py-2.5 rounded text-sm font-semibold border flex items-center gap-1.5 transition-colors", isDark ? "border-dark-400 text-gray-300 hover:bg-dark-600" : "border-gray-300 text-gray-700 hover:bg-gray-50")}>
             <Search className="w-4 h-4" /> Browse Shop
           </Link>
         </div>

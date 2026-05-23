@@ -1,38 +1,45 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { PRODUCTS, CATEGORIES } from "@/data/products";
 import ProductCard from "@/components/features/ProductCard";
-import SectionHeader from "@/components/features/SectionHeader";
+import { useStore } from "@/store/useStore";
+import { cn } from "@/lib/utils";
 
 export default function CategoryPage() {
   const { id } = useParams<{ id: string }>();
+  const { theme } = useStore();
+  const isDark = theme === "dark";
   const category = CATEGORIES.find((c) => c.id === id);
   const products = PRODUCTS.filter((p) => p.category === id);
 
   return (
-    <div className="pt-[130px] min-h-screen">
-      {/* Hero Banner */}
-      {category && (
-        <div
-          className="relative h-40 md:h-56 flex items-center overflow-hidden"
-          style={{ background: `linear-gradient(135deg, ${category.color}22 0%, transparent 60%)` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-dark-800" />
-          <div className="container-custom relative z-10">
-            <div className="text-6xl mb-3">{category.icon}</div>
-            <h1 className="text-3xl md:text-5xl font-black font-grotesk text-white">{category.name}</h1>
-            <p className="text-gray-400 mt-1">{products.length} products available</p>
+    <div className="pt-[96px] min-h-screen bg-theme-secondary">
+      <div className="container-custom py-4">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-xs text-theme-muted mb-4">
+          <Link to="/" className="hover:text-brand-500">Home</Link>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-theme-primary font-medium">{category?.name || id}</span>
+        </nav>
+
+        {/* Header */}
+        <div className={cn("rounded border p-4 mb-4 flex items-center gap-3", isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100 shadow-card")}>
+          <span className="text-3xl">{category?.icon || "🛍️"}</span>
+          <div>
+            <h1 className="text-lg font-bold text-theme-primary">{category?.name || id}</h1>
+            <p className="text-theme-muted text-xs">{products.length} products available</p>
           </div>
         </div>
-      )}
 
-      <div className="container-custom py-8">
         {products.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-gray-400 text-xl">No products in this category yet.</p>
+            <p className="text-4xl mb-3">🛍️</p>
+            <h3 className="text-theme-primary font-bold mb-1">No products in this category</h3>
+            <Link to="/shop" className="text-brand-500 text-sm hover:underline">Browse all products</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {products.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         )}

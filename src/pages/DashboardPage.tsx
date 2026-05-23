@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { User, Package, Heart, Bell, MapPin, Settings, LogOut, ChevronRight, Star, Truck, CheckCircle } from "lucide-react";
+import { User, Package, Heart, MapPin, Settings, LogOut, ChevronRight, Star, CheckCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useStore } from "@/store/useStore";
 import { formatPrice } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const MOCK_ORDERS = [
   { id: "NX87654321", product: "iPhone 16 Pro Max", image: "https://images.unsplash.com/photo-1697462059929-60f51e2b9e86?w=100&h=100&fit=crop", price: 134900, status: "Delivered", date: "12 Jan 2025" },
@@ -14,7 +15,8 @@ const MOCK_ORDERS = [
 export default function DashboardPage() {
   const [tab, setTab] = useState("profile");
   const { user, logout } = useAuth();
-  const { wishlistItems, cartItems } = useStore();
+  const { wishlistItems, theme } = useStore();
+  const isDark = theme === "dark";
   const navigate = useNavigate();
 
   const TABS = [
@@ -25,63 +27,75 @@ export default function DashboardPage() {
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  const statusColor: Record<string, string> = {
-    Delivered: "text-green-400 bg-green-400/10",
-    "In Transit": "text-blue-400 bg-blue-400/10",
-    Processing: "text-amber-400 bg-amber-400/10",
-    Cancelled: "text-red-400 bg-red-400/10",
+  const statusConfig: Record<string, { color: string; bg: string }> = {
+    Delivered: { color: "text-green-700", bg: "bg-green-50" },
+    "In Transit": { color: "text-blue-700", bg: "bg-blue-50" },
+    Processing: { color: "text-amber-700", bg: "bg-amber-50" },
+    Cancelled: { color: "text-red-700", bg: "bg-red-50" },
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  if (isDark) {
+    Object.assign(statusConfig, {
+      Delivered: { color: "text-green-400", bg: "bg-green-900/20" },
+      "In Transit": { color: "text-blue-400", bg: "bg-blue-900/20" },
+      Processing: { color: "text-amber-400", bg: "bg-amber-900/20" },
+      Cancelled: { color: "text-red-400", bg: "bg-red-900/20" },
+    });
+  }
+
+  const cardClass = cn("rounded border p-4", isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100 shadow-card");
 
   return (
-    <div className="pt-[130px] min-h-screen">
-      <div className="container-custom py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div className="pt-[96px] min-h-screen bg-theme-secondary">
+      <div className="container-custom py-4 md:py-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Sidebar */}
           <div className="space-y-3">
             {/* Profile Card */}
-            <div className="glass rounded-2xl p-5 text-center">
+            <div className={cn(cardClass, "text-center")}>
               <img
-                src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
+                src={user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.name}`}
                 alt="avatar"
-                className="w-16 h-16 rounded-full mx-auto mb-3"
+                className="w-14 h-14 rounded-full mx-auto mb-2"
               />
-              <h3 className="text-white font-bold">{user?.name}</h3>
-              <p className="text-gray-400 text-sm truncate">{user?.email}</p>
-              <div className="flex justify-center gap-4 mt-3 pt-3 border-t border-white/10">
+              <h3 className="text-theme-primary font-bold text-sm">{user?.name}</h3>
+              <p className="text-theme-muted text-xs truncate">{user?.email}</p>
+              <div className={cn("flex justify-center gap-4 mt-3 pt-3 border-t", isDark ? "border-dark-400" : "border-gray-100")}>
                 <div className="text-center">
-                  <p className="text-white font-bold text-lg">{MOCK_ORDERS.length}</p>
-                  <p className="text-gray-400 text-xs">Orders</p>
+                  <p className="text-theme-primary font-bold">{MOCK_ORDERS.length}</p>
+                  <p className="text-theme-muted text-xs">Orders</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-white font-bold text-lg">{wishlistItems.length}</p>
-                  <p className="text-gray-400 text-xs">Wishlist</p>
+                  <p className="text-theme-primary font-bold">{wishlistItems.length}</p>
+                  <p className="text-theme-muted text-xs">Wishlist</p>
                 </div>
               </div>
             </div>
 
             {/* Nav */}
-            <div className="glass rounded-2xl p-2">
+            <div className={cn("rounded border overflow-hidden", isDark ? "bg-dark-600 border-dark-400" : "bg-white border-gray-100 shadow-card")}>
               {TABS.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${tab === id ? "bg-brand-500/15 text-brand-400 border border-brand-500/30" : "text-gray-300 hover:text-white hover:bg-white/5"}`}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-4 py-3 text-xs font-medium transition-colors border-b",
+                    isDark ? "border-dark-500" : "border-gray-50",
+                    tab === id
+                      ? isDark ? "bg-brand-900/30 text-brand-400" : "bg-blue-50 text-brand-500"
+                      : isDark ? "text-gray-300 hover:bg-dark-500" : "text-gray-700 hover:bg-gray-50"
+                  )}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   {label}
                   {tab === id && <ChevronRight className="w-3 h-3 ml-auto" />}
                 </button>
               ))}
               <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all mt-1 border-t border-white/10 pt-2"
+                onClick={() => { logout(); navigate("/login"); }}
+                className={cn("w-full flex items-center gap-2.5 px-4 py-3 text-xs font-medium transition-colors text-red-500", isDark ? "hover:bg-dark-500" : "hover:bg-red-50")}
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5" />
                 Logout
               </button>
             </div>
@@ -90,32 +104,32 @@ export default function DashboardPage() {
           {/* Content */}
           <div className="md:col-span-3">
             {tab === "profile" && (
-              <div className="glass rounded-2xl p-6">
-                <h2 className="text-white font-bold text-xl mb-6">My Profile</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className={cardClass}>
+                <h2 className="text-theme-primary font-bold text-base mb-4">My Profile</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   {[
                     { label: "Full Name", value: user?.name },
                     { label: "Email", value: user?.email },
                     { label: "Phone", value: user?.phone || "+91 98765 43210" },
                     { label: "Member Since", value: "January 2025" },
                   ].map(({ label, value }) => (
-                    <div key={label} className="glass rounded-xl p-4">
-                      <p className="text-gray-400 text-xs mb-1">{label}</p>
-                      <p className="text-white font-medium">{value}</p>
+                    <div key={label} className={cn("rounded p-3 border", isDark ? "border-dark-400 bg-dark-500" : "border-gray-100 bg-gray-50")}>
+                      <p className="text-theme-muted text-[10px] mb-0.5">{label}</p>
+                      <p className="text-theme-primary font-medium text-sm">{value}</p>
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { icon: Package, label: "Total Orders", value: MOCK_ORDERS.length },
+                    { icon: Package, label: "Orders", value: MOCK_ORDERS.length },
                     { icon: Heart, label: "Wishlist", value: wishlistItems.length },
                     { icon: Star, label: "Reviews", value: 7 },
                     { icon: CheckCircle, label: "Delivered", value: 2 },
                   ].map(({ icon: Icon, label, value }) => (
-                    <div key={label} className="glass rounded-xl p-4 text-center">
-                      <Icon className="w-6 h-6 text-brand-400 mx-auto mb-2" />
-                      <p className="text-white font-bold text-xl">{value}</p>
-                      <p className="text-gray-400 text-xs">{label}</p>
+                    <div key={label} className={cn("rounded p-3 border text-center", isDark ? "border-dark-400 bg-dark-500" : "border-gray-100 bg-gray-50")}>
+                      <Icon className="w-5 h-5 text-brand-500 mx-auto mb-1" />
+                      <p className="text-theme-primary font-bold text-lg">{value}</p>
+                      <p className="text-theme-muted text-xs">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -123,22 +137,22 @@ export default function DashboardPage() {
             )}
 
             {tab === "orders" && (
-              <div className="glass rounded-2xl p-6">
-                <h2 className="text-white font-bold text-xl mb-6">My Orders</h2>
-                <div className="space-y-4">
+              <div className={cardClass}>
+                <h2 className="text-theme-primary font-bold text-base mb-4">My Orders</h2>
+                <div className="space-y-3">
                   {MOCK_ORDERS.map((order) => (
-                    <div key={order.id} className="glass rounded-xl p-4 flex items-center gap-4 hover:border-brand-500/30 transition-all">
-                      <img src={order.image} alt={order.product} className="w-16 h-16 object-cover rounded-xl flex-shrink-0" />
+                    <div key={order.id} className={cn("flex items-center gap-3 p-3 rounded border transition-all", isDark ? "border-dark-400 hover:border-dark-300" : "border-gray-100 hover:border-gray-200")}>
+                      <img src={order.image} alt={order.product} className="w-14 h-14 object-contain rounded flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-semibold text-sm">{order.product}</p>
-                        <p className="text-gray-400 text-xs mt-0.5">Order #{order.id}</p>
-                        <p className="text-gray-400 text-xs">{order.date}</p>
+                        <p className="text-theme-primary font-medium text-sm line-clamp-1">{order.product}</p>
+                        <p className="text-theme-muted text-xs">Order #{order.id}</p>
+                        <p className="text-theme-muted text-xs">{order.date}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor[order.status] || ""}`}>
+                        <span className={cn("text-xs font-semibold px-2 py-0.5 rounded", statusConfig[order.status]?.bg, statusConfig[order.status]?.color)}>
                           {order.status}
                         </span>
-                        <p className="text-white font-bold mt-2 text-sm">{formatPrice(order.price)}</p>
+                        <p className="text-theme-primary font-bold text-sm mt-1">{formatPrice(order.price)}</p>
                       </div>
                     </div>
                   ))}
@@ -147,21 +161,23 @@ export default function DashboardPage() {
             )}
 
             {tab === "wishlist" && (
-              <div className="glass rounded-2xl p-6">
-                <h2 className="text-white font-bold text-xl mb-6">My Wishlist ({wishlistItems.length})</h2>
+              <div className={cardClass}>
+                <h2 className="text-theme-primary font-bold text-base mb-4">Wishlist ({wishlistItems.length})</h2>
                 {wishlistItems.length === 0 ? (
                   <div className="text-center py-8">
-                    <Heart className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-400">No items in wishlist</p>
+                    <Heart className="w-10 h-10 text-theme-muted mx-auto mb-2" />
+                    <p className="text-theme-muted text-sm">No items in wishlist</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {wishlistItems.map((item) => (
-                      <div key={item.id} className="glass rounded-xl overflow-hidden">
-                        <img src={item.image} alt={item.name} className="w-full h-28 object-cover" />
-                        <div className="p-3">
-                          <p className="text-white text-xs font-medium line-clamp-2">{item.name}</p>
-                          <p className="text-brand-400 font-bold mt-1">{formatPrice(item.price)}</p>
+                      <div key={item.id} className={cn("rounded border overflow-hidden", isDark ? "border-dark-400" : "border-gray-100")}>
+                        <div className={cn("aspect-square p-2", isDark ? "bg-dark-500" : "bg-gray-50")}>
+                          <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
+                        </div>
+                        <div className="p-2.5">
+                          <p className="text-theme-primary text-xs font-medium line-clamp-2">{item.name}</p>
+                          <p className="text-brand-500 font-bold text-sm mt-1">{formatPrice(item.price)}</p>
                         </div>
                       </div>
                     ))}
@@ -171,42 +187,37 @@ export default function DashboardPage() {
             )}
 
             {tab === "addresses" && (
-              <div className="glass rounded-2xl p-6">
-                <h2 className="text-white font-bold text-xl mb-6">Saved Addresses</h2>
-                {(user?.addresses || []).map((addr) => (
-                  <div key={addr.id} className="glass rounded-xl p-4 mb-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${addr.isDefault ? "bg-brand-500/20 text-brand-400" : "bg-white/10 text-gray-400"}`}>{addr.label}</span>
-                        <p className="text-white mt-2 font-medium">{addr.street}</p>
-                        <p className="text-gray-400 text-sm">{addr.city}, {addr.state} - {addr.zip}</p>
-                      </div>
-                      {addr.isDefault && <span className="text-green-400 text-xs">Default</span>}
-                    </div>
+              <div className={cardClass}>
+                <h2 className="text-theme-primary font-bold text-base mb-4">Saved Addresses</h2>
+                <div className={cn("rounded border p-3 mb-3", isDark ? "border-dark-400 bg-dark-500" : "border-gray-100 bg-gray-50")}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-brand-50 text-brand-600">Home</span>
+                    <span className="text-green-600 text-xs">Default</span>
                   </div>
-                ))}
-                <button className="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold mt-2 relative z-10">+ Add New Address</button>
+                  <p className="text-theme-primary text-sm font-medium">123, MG Road, Koramangala</p>
+                  <p className="text-theme-muted text-xs">Bangalore, Karnataka - 560001</p>
+                </div>
+                <button className="btn-flipkart px-4 py-2 rounded text-sm font-semibold">+ Add New Address</button>
               </div>
             )}
 
             {tab === "settings" && (
-              <div className="glass rounded-2xl p-6">
-                <h2 className="text-white font-bold text-xl mb-6">Account Settings</h2>
-                <div className="space-y-3">
+              <div className={cardClass}>
+                <h2 className="text-theme-primary font-bold text-base mb-4">Account Settings</h2>
+                <div className="space-y-2">
                   {[
                     { label: "Email Notifications", desc: "Receive order updates via email" },
-                    { label: "SMS Alerts", desc: "Receive delivery alerts via SMS" },
-                    { label: "Push Notifications", desc: "Browser push notifications" },
-                    { label: "Personalized Recommendations", desc: "AI-powered product suggestions" },
-                    { label: "Dark Mode", desc: "Always use dark theme" },
-                  ].map((s) => (
-                    <div key={s.label} className="glass rounded-xl px-4 py-3 flex items-center justify-between">
+                    { label: "SMS Alerts", desc: "Delivery alerts via SMS" },
+                    { label: "Push Notifications", desc: "Browser notifications" },
+                    { label: "Personalized Deals", desc: "AI-powered recommendations" },
+                  ].map((s, i) => (
+                    <div key={s.label} className={cn("flex items-center justify-between p-3 rounded border", isDark ? "border-dark-400" : "border-gray-100")}>
                       <div>
-                        <p className="text-white text-sm font-medium">{s.label}</p>
-                        <p className="text-gray-400 text-xs">{s.desc}</p>
+                        <p className="text-theme-primary text-sm font-medium">{s.label}</p>
+                        <p className="text-theme-muted text-xs">{s.desc}</p>
                       </div>
-                      <div className="w-11 h-6 bg-brand-500 rounded-full relative cursor-pointer">
-                        <div className="absolute top-0.5 right-0.5 w-5 h-5 bg-white rounded-full shadow" />
+                      <div className={cn("w-10 h-5 rounded-full relative cursor-pointer transition-colors", i % 2 === 0 ? "bg-brand-500" : isDark ? "bg-dark-400" : "bg-gray-200")}>
+                        <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all", i % 2 === 0 ? "right-0.5" : "left-0.5")} />
                       </div>
                     </div>
                   ))}
